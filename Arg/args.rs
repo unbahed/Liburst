@@ -4,10 +4,19 @@ use crate::lib::Arg::error::Error;
 
 //Input type
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum InputType{
+pub enum InputStriction{
     None,
-    Open(String),
-    Strict(String, Option<Vec<String>>),
+    Open(InputType),
+    Strict(InputType, Vec<String>),
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum InputType{
+    Char,
+    String,
+    Int, 
+    Float,
+    Bool,
 }
 
 //Dependency type
@@ -21,12 +30,10 @@ pub enum Dep{
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Argm{
     pub name: Vec<String>,
-    pub input: InputType,
+    pub input: InputStriction,
     pub dependencies: Dep,
     pub desc: String,
 }
-
-
 
 pub trait Clone{
     fn clone(&self) -> Self;

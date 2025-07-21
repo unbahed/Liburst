@@ -1,9 +1,8 @@
 use std::env::{Args, args};
-use std::any::{type_name, type_name_of_val};
+use std::any::{TypeId, type_name, type_name_of_val};
 use std::collections::HashMap;
-use std::fmt;
 use crate::lib::Arg::error::Error;
-use crate::lib::Arg::args::{Argm, InputType, Dep};
+use crate::lib::Arg::args::{Argm, InputType, InputStriction, Dep};
 
 
 pub fn get_argv() -> Vec<String>{
@@ -24,44 +23,87 @@ pub fn is_command(s: &String) -> bool{
     }
 }
 
-/*
 fn check_dep(){
 }
-*/
 
-fn check_input(arg: &Argm, argv: &Vec<Option<&String>>) -> Result<(Argm, Option<String>), Error>{
+fn convert_type<T: 'static>(var: T) -> InputType{
+    let mut convertedType: InputType = InputType::Char;
+    match TypeId::of::<T>(){
+        val if val == TypeId::of::<i32>() => {
+            convertedType = InputType::Int;
+        },
+        val if val == TypeId::of::<String>() => {
+            convertedType = InputType::String;
+        },
+        val if val == TypeId::of::<f32>() => {
+            convertedType = InputType::Float;
+        },
+        val if val == TypeId::of::<bool>() => {
+            convertedType = InputType::Bool;
+        },
+        val if val == TypeId::of::<u8>() => {
+            convertedType = InputType::Char;
+        },
+        _ => (),
+    }
+    return convertedType;
+}
+
+fn check_type(reqInputType: &InputType, givenInput: &String) -> bool{
+
+
+
+    return true;
+}
+
+
+fn check_input(arg: &Argm, givenArg: &String, givenInput: Option<&String>) -> Result<(Argm, Option<String>), Error>{
     match &arg.input{
-        InputType::None =>{
-            if argv[1] == None{
+        InputStriction::None =>{
+            if givenInput == None{
                 return Ok((arg.clone(), None));
             }
             else{
-                return Err(Error::InputNotNeeded(argv[0].unwrap().clone()));
+                return Err(Error::InputNotNeeded(givenArg.clone()));
             }
         },
-        InputType::Open(t) => {
-            match argv[1].ok_or(Error::InputNotGiven(argv[0].unwrap().clone())){
-                Ok(s) => {
-                    if is_command(s){
-                        return Err(Error::InputNotFound(arg.name[1].clone(), s.clone()));
+        InputStriction::Open(inputType) => {
+            match givenInput.ok_or(Error::InputNotGiven(givenArg.clone())){
+                Ok(okGivenInput) => {
+                    if is_command(okGivenInput){
+                        return Err(Error::InputNotFound(arg.name[1].clone(), okGivenInput.clone()));
                     }
                     else{
-                        return Ok((arg.clone(), Some(s.clone())));
+                        match check_type(inputType, okGivenInput){
+                            true => {
+                                return Ok((arg.clone(), Some(okGivenInput.clone())));
+                            },
+                            false =>{
+                                return Err(Error::WrongInputType(arg.name[1].clone()));
+                            },
+                        }
                     }
                 },
                 Err(e) => {
-                    return Err(Error::InputNotGiven(argv[0].unwrap().clone()));
+                    return Err(Error::InputNotGiven(givenArg.clone()));
                 },
             }
         },
-        InputType::Strict(t, l) => {
-            match argv[1].ok_or(Error::InputNotGiven(argv[0].unwrap().clone())){
-                Ok(s)=>{
-                    if l.clone().unwrap().contains(s){
-                        return Ok((arg.clone(), Some(s.clone())));
+        InputStriction::Strict(inputType, optionsList) => {
+            match givenInput.ok_or(Error::InputNotGiven(givenArg.clone())){
+                Ok(okGivenInput)=>{
+                    if optionsList.contains(okGivenInput){
+                        match check_type(inputType, okGivenInput){
+                            true => {
+                                return Ok((arg.clone(), Some(okGivenInput.clone())));
+                            },
+                            false =>{
+                                return Err(Error::WrongInputType(arg.name[1].clone()));
+                            },
+                        }
                     }
                     else{
-                        return Err(Error::InputNotFound(arg.name[1].clone(), s.clone()));
+                        return Err(Error::InputNotFound(arg.name[1].clone(), okGivenInput.clone()));
                     }
                 },
                 Err(e)=>{
@@ -89,7 +131,7 @@ pub fn arg_hlr(argv: &Vec<String>, cmds: &Vec<Argm>) -> Result<HashMap<Argm, Opt
                         if j.name.contains(&argv[i]){
                             coms += 1;
                             if i >= argv.len()-1{
-                                match check_input(j, &vec![Some(&argv[i]), None]){
+                                match check_input(j, &argv[i], None){
                                     Err(e) =>{
                                         return Err(e);
                                     },
@@ -99,7 +141,7 @@ pub fn arg_hlr(argv: &Vec<String>, cmds: &Vec<Argm>) -> Result<HashMap<Argm, Opt
                                 }
                             }
                             else{
-                                match check_input(j, &vec![Some(&argv[i]), Some(&argv[i+1])]){
+                                match check_input(j, &argv[i], Some(&argv[i+1])){
                                     Err(e) =>{
                                         return Err(e);
                                     },
