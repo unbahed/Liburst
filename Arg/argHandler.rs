@@ -2,7 +2,7 @@ use std::env::{Args, args};
 use std::any::{TypeId, type_name, type_name_of_val};
 use std::collections::HashMap;
 use crate::lib::Arg::error::Error;
-use crate::lib::Arg::args::{Argm, InputType, InputStriction, Dep};
+use crate::lib::Arg::args::{Argm, InputType, InputFormat, Dep};
 
 
 pub fn get_argv() -> Vec<String>{
@@ -59,7 +59,7 @@ fn check_type(reqInputType: &InputType, givenInput: &String) -> bool{
 
 fn check_input(arg: &Argm, givenArg: &String, givenInput: Option<&String>) -> Result<(Argm, Option<String>), Error>{
     match &arg.input{
-        InputStriction::None =>{
+        InputFormat::None =>{
             if givenInput == None{
                 return Ok((arg.clone(), None));
             }
@@ -67,14 +67,14 @@ fn check_input(arg: &Argm, givenArg: &String, givenInput: Option<&String>) -> Re
                 return Err(Error::InputNotNeeded(givenArg.clone()));
             }
         },
-        InputStriction::Open(inputType) => {
+        InputFormat::Open(inputType) => {
             match givenInput.ok_or(Error::InputNotGiven(givenArg.clone())){
                 Ok(okGivenInput) => {
                     if is_command(okGivenInput){
                         return Err(Error::InputNotFound(arg.name[1].clone(), okGivenInput.clone()));
                     }
                     else{
-                        match check_type(inputType, okGivenInput){
+                        match check_type(&inputType, okGivenInput){
                             true => {
                                 return Ok((arg.clone(), Some(okGivenInput.clone())));
                             },
@@ -89,11 +89,11 @@ fn check_input(arg: &Argm, givenArg: &String, givenInput: Option<&String>) -> Re
                 },
             }
         },
-        InputStriction::Strict(inputType, optionsList) => {
+        InputFormat::Strict(inputType, optionsList) => {
             match givenInput.ok_or(Error::InputNotGiven(givenArg.clone())){
                 Ok(okGivenInput)=>{
                     if optionsList.contains(okGivenInput){
-                        match check_type(inputType, okGivenInput){
+                        match check_type(&inputType, okGivenInput){
                             true => {
                                 return Ok((arg.clone(), Some(okGivenInput.clone())));
                             },

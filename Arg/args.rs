@@ -4,7 +4,7 @@ use crate::lib::Arg::error::Error;
 
 //Input type
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum InputStriction{
+pub enum InputFormat{
     None,
     Open(InputType),
     Strict(InputType, Vec<String>),
@@ -30,7 +30,7 @@ pub enum Dep{
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Argm{
     pub name: Vec<String>,
-    pub input: InputStriction,
+    pub input: InputFormat,
     pub dependencies: Dep,
     pub desc: String,
 }
