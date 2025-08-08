@@ -19,20 +19,19 @@ pub enum InputType{
     Bool,
 }
 
-//Dependency type
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub enum Dep{
-    None,
-    List(Vec<String>),
-}
-
 //Arguement structures
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Argm{
     pub name: Vec<String>,
     pub input: InputFormat,
-    pub dependencies: Dep,
     pub desc: String,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Argv{
+    pub arg: Argm,
+    pub input: Option<String>,
+    pub dep: Vec<(Argm, Option<String>)>,
 }
 
 pub trait Clone{

@@ -11,10 +11,6 @@ pub enum Error{
     InputNotFound(String, String),
     InputNotNeeded(String),
 }
-pub trait Clone{
-    fn clone(&self) -> Self;
-}
-
 
 impl fmt::Display for Error{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result{
